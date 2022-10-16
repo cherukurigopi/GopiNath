@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:java="http://www.mulesoft.org/schema/mule/java"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+	<configuration-properties doc:name="Configuration properties" doc:id="4507b3e5-6773-4706-bd49-5225592efddb" file="dev.yaml" />
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="e17141e7-84b8-4ebb-99b5-44243b789f29" >
+		<http:request-connection protocol="HTTPS" host="${secure::https.request.host}" connectionIdleTimeout="${secure::https.listener.timeout}"/>
+	</http:request-config>
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="d197836e-5262-4421-b5e5-9078e3004283" >
+		<http:listener-connection host="${secure::https.listener.host}" port="${secure::https.listener.port}" readTimeout="${secure::https.listener.timeout}"/>
+	</http:listener-config>
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="33071001-f829-4ec3-9c4c-2acc6b80f0ac" file="secure-dev.yaml" key="abcdefghijklmnop" >
+		<secure-properties:encrypt algorithm="Blowfish" />
+	</secure-properties:config>
+	<flow name="Test" doc:id="76eb4c65-24f6-4852-82fc-20debfdae333" >
+		<http:listener doc:name="Listener" doc:id="c1995bdf-afe1-4ee7-b3b3-1402542cc228" path="${secure::https.listener.path}" config-ref="HTTP_Listener_config"/>
+		<set-variable value="#[p('secure::https.request.path')]" doc:name="path" doc:id="4507d4a7-28ed-47de-9b71-ca82cd469279" variableName="path"/>
+		<ee:transform doc:name="Transform Message" doc:id="6f96ae1d-28e6-4faa-ba35-b3c1f232cc07" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[output application/json
+var path = vars.path
+---
+{	
+	path: if (path contains (p('secure::https.request.path'))) path  else ""	
+} 
+
+	
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="GET" doc:name="Request" doc:id="fae74089-9ac1-46d5-84cd-b56d78066a3f" config-ref="HTTP_Request_configuration" path="#[payload.path]">
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="2f103eca-c20a-4c3e-a949-0fe95745e657">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

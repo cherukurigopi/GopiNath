@@ -1,0 +1,12 @@
+https:
+  listener:
+    host: "localhost"
+    port: "8081"
+    path: "test" 
+    timeout: "30000"
+    
+  request:
+    host: "jsonplaceholder.typicode.com"
+    port: "443"
+    path: "/posts/1"
+    
